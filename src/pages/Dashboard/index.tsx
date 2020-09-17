@@ -1,52 +1,65 @@
-import React from 'react';
+import React, { useState, FormEvent } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 
+import api from '../../services/api';
 import logoImg from '../../assets/logo.svg';
 
 import { Title, Form, Repositories } from './styles';
 
-const Dashboard: React.FC = () => (
-  <>
-    <img src={logoImg} alt="Github Explorer" />
-    <Title>Explore repositórios no Github</Title>
+interface Repository {
+  full_name: string;
+  description: string;
+  owner: {
+    login: string;
+    avatar_url: string;
+  };
+}
 
-    <Form>
-      <input type="text" placeholder="Digite o nome do repositório" />
-      <button type="submit">Pesquisar</button>
-    </Form>
+const Dashboard: React.FC = () => {
+  const [newRepo, setNewRepo] = useState('');
+  const [repositories, setRepositories] = useState<Repository[]>([]);
 
-    <Repositories>
-      <a href="teste">
-        <img src="https://github.com/newton-duarte.png" alt="Newton Duarte" />
-        <div>
-          <strong>vuethub</strong>
-          <p>A Vue.js application that you can search for GitHub users and see their repos!</p>
-        </div>
+  async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
 
-        <FiChevronRight size={20} />
-      </a>
+    const response = await api.get<Repository>(`repos/${newRepo}`);
 
-      <a href="teste">
-        <img src="https://github.com/newton-duarte.png" alt="Newton Duarte" />
-        <div>
-          <strong>vuethub</strong>
-          <p>A Vue.js application that you can search for GitHub users and see their repos!</p>
-        </div>
+    const repository = response.data;
 
-        <FiChevronRight size={20} />
-      </a>
+    setRepositories([...repositories, repository]);
+    setNewRepo('');
+  }
 
-      <a href="teste">
-        <img src="https://github.com/newton-duarte.png" alt="Newton Duarte" />
-        <div>
-          <strong>vuethub</strong>
-          <p>A Vue.js application that you can search for GitHub users and see their repos!</p>
-        </div>
+  return (
+    <>
+      <img src={logoImg} alt="Github Explorer" />
+      <Title>Explore repositórios no Github</Title>
 
-        <FiChevronRight size={20} />
-      </a>
-    </Repositories>
-  </>
-);
+      <Form onSubmit={handleAddRepository}>
+        <input
+          value={newRepo}
+          onChange={(e) => setNewRepo(e.target.value)}
+          type="text"
+          placeholder="Digite o nome do repositório"
+        />
+        <button type="submit">Pesquisar</button>
+      </Form>
+
+      <Repositories>
+        {repositories.map((repository) => (
+          <a href="teste">
+            <img src={repository.owner.avatar_url} alt={repository.owner.login} />
+            <div>
+              <strong>{repository.full_name}</strong>
+              <p>{repository.description}</p>
+            </div>
+
+            <FiChevronRight size={20} />
+          </a>
+        ))}
+      </Repositories>
+    </>
+  );
+};
 
 export default Dashboard;
